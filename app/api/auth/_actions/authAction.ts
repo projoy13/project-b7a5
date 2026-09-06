@@ -1,6 +1,7 @@
- "use server"
- import { api } from "@/lib/api";
-import { LoginState } from "@/lib/types";
+"use server";
+
+import { api } from "@/lib/api";
+import type { LoginState } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
@@ -18,6 +19,7 @@ const setAuthCookies = async ({
     maxAge: 24 * 60 * 60,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    path: "/",
   });
 
   cookieStore.set("refreshToken", refreshToken, {
@@ -25,13 +27,14 @@ const setAuthCookies = async ({
     maxAge: 7 * 24 * 60 * 60,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    path: "/",
   });
 };
 
 export const loginAction = async (
   prevState: LoginState,
   formData: FormData
-) => {
+): Promise<LoginState> => {
   const res = await api("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({
@@ -49,13 +52,16 @@ export const loginAction = async (
 
   await setAuthCookies(res.data);
 
-  redirect("/dashboard");
+  return {
+    success: true,
+    message: "Login successful! Welcome back.",
+  };
 };
 
 export const registerAction = async (
   prevState: LoginState,
   formData: FormData
-) => {
+): Promise<LoginState> => {
   const res = await api("/api/auth/register", {
     method: "POST",
     body: JSON.stringify({
@@ -91,17 +97,14 @@ export const registerAction = async (
 
   await setAuthCookies(login.data);
 
-  redirect("/dashboard");
+  redirect("/api/dashboard");
 };
 
-export const logoutAction=async()=>{
+export const logoutAction = async () => {
+  const cookieStore = await cookies();
 
-const cookieStore = await cookies();
-
-  cookieStore.delete("accessToken")
-
+  cookieStore.delete("accessToken");
   cookieStore.delete("refreshToken");
 
-  redirect("/login")
-
-}
+  redirect("/api/login");
+};

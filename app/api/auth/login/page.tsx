@@ -1,5 +1,4 @@
 import Link from "next/link";
-// import RegisterForm from "../_components/RegisterForm";
 import LoginForm from "../_components/LoginFrom";
 
 export default function Page() {
@@ -9,7 +8,10 @@ export default function Page() {
         {/* Header */}
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="text-gray-500">Sign in to manage</p>
+
+          <p className="text-gray-500">
+            Sign in to manage your account
+          </p>
         </div>
 
         {/* Login Form */}
@@ -17,11 +19,11 @@ export default function Page() {
           <LoginForm />
         </div>
 
-        {/* Login Link */}
+        {/* Register Link */}
         <p className="mt-6 text-center">
-          Donot  have an account?{" "}
+          Do not have an account?{" "}
           <Link
-            href="/register"
+            href="/api/register"
             className="font-medium underline"
           >
             Sign up

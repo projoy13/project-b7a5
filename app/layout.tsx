@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import {Toaster} from "@/components/ui/toast"
+import { Toaster } from "sonner";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
-const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
+
+const ebGaramondHeading = EB_Garamond({subsets:['latin'],variable:'--font-heading'});
+
+const notoSans = Noto_Sans({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,18 +29,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", outfit.variable)}
+      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", notoSans.variable, ebGaramondHeading.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}
-      <Navbar></Navbar>
+      <body className="min-h-full flex flex-col">
 
-       <Toaster></Toaster>
-         
-         <Footer>
+        <Navbar></Navbar>
+        <Toaster position="top-right" richColors>
+
+        </Toaster>
+        {/* navbar */}
+        {children}
+        {/* footer */}
+        <Footer>
           
-         </Footer>
-      </body>
-     
+        </Footer>
+        </body>
     </html>
   );
 }
