@@ -17,7 +17,7 @@ const getMe = async (): Promise<User | null> => {
     },
   });
 
-  if (!res.success) return null;
+  if (!res.success) return res.data.user;
 
   return res.data.user as User;
 };

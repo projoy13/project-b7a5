@@ -1,4 +1,4 @@
-export type Role="ADMIN" |"PROVIDER" |"RENTER"
+export type Role="ADMIN" |"PROVIDER" |"CUSTOMER"
 export type LoginState={
     success:boolean
     message:string
