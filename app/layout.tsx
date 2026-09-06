@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import {Toaster} from "@/components/ui/toast"
 import { Navbar } from "@/components/shared/navbar";
+import { Footer } from "@/components/shared/footer";
 const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = Geist({
@@ -31,7 +32,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <Navbar></Navbar>
 
        <Toaster></Toaster>
-
+         
+         <Footer>
+          
+         </Footer>
       </body>
      
     </html>
