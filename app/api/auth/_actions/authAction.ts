@@ -5,6 +5,14 @@ import type { LoginState } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
+import jwt from "jsonwebtoken";
+
+type DecodedToken = {
+  id: string;
+  name: string;
+  email: string;
+  role: "CUSTOMER" | "ADMIN" | "PROVIDER";
+};
 
 const setAuthCookies = async ({
   accessToken,
@@ -53,13 +61,46 @@ export const loginAction = async (
 
   await setAuthCookies(res.data);
 
-  redirect("/api/dashboard");
+  // Decode access token to get the user's role
+  const decoded = jwt.decode(res.data.accessToken) as DecodedToken | null;
+
+  console.log("Decoded user:", decoded);
+
+  if (!decoded || !decoded.role) {
+    return {
+      success: false,
+      message: "Invalid access token",
+    };
+  }
+
+  console.log("User role:", decoded.role);
+
+  // CUSTOMER
+  if (decoded.role === "CUSTOMER") {
+    redirect("/api/dashboard");
+  }
+
+  // ADMIN
+  if (decoded.role === "ADMIN") {
+    redirect("/api/admin-dashboard");
+  }
+
+  // PROVIDER
+  if (decoded.role === "PROVIDER") {
+    redirect("/api/provider-dashboard");
+  }
+
+  return {
+    success: false,
+    message: "Invalid user role",
+  };
 };
 
 export const registerAction = async (
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> => {
+  // Register user
   const res = await api("/api/auth/register", {
     method: "POST",
     body: JSON.stringify({
@@ -77,6 +118,7 @@ export const registerAction = async (
     };
   }
 
+  // Automatically login after registration
   const login = await api("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({
@@ -94,15 +136,58 @@ export const registerAction = async (
 
   await setAuthCookies(login.data);
 
-  redirect("/api/dashboard");
+  // Decode token to get role
+  const decoded = jwt.decode(login.data.accessToken) as DecodedToken | null;
+
+  console.log("Registered user:", decoded);
+
+  if (!decoded || !decoded.role) {
+    return {
+      success: false,
+      message: "Invalid access token",
+    };
+  }
+
+  // CUSTOMER
+  if (decoded.role === "CUSTOMER") {
+    redirect("/api/dashboard");
+  }
+
+  // ADMIN
+  if (decoded.role === "ADMIN") {
+    redirect("/api/admin-dashboard");
+  }
+
+  // PROVIDER
+  if (decoded.role === "PROVIDER") {
+    redirect("/api/provider-dashboard");
+  }
+
+  return {
+    success: false,
+    message: "Invalid user role",
+  };
 };
 
 export const logout = async () => {
-    const cookieStore = await cookies();
-    
-    cookieStore.delete("accessToken");
-    cookieStore.delete("refreshToken");
+  const cookieStore = await cookies();
 
-    revalidateTag("my-profile", "max");
-    // redirect("/login");
-}
+  console.log(
+    "BEFORE LOGOUT:",
+    cookieStore.get("accessToken")?.value
+      ? "TOKEN EXISTS"
+      : "NO TOKEN"
+  );
+
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
+
+  revalidateTag("my-profile", "max");
+
+  console.log(
+    "AFTER LOGOUT:",
+    cookieStore.get("accessToken")?.value
+      ? "TOKEN STILL EXISTS"
+      : "NO TOKEN"
+  );
+};
