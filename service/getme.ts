@@ -1,25 +1,39 @@
-import { api } from "@/lib/api";
-import { User } from "@/lib/types";
+"use server"
+
 import { cookies } from "next/headers";
-// import jwt from "jsonwebtoken" 
-import { decodeToken } from "@/utils/jwt";
 
-const getMe = async (): Promise<User | null> => {
-  const token =decodeToken((await cookies()).get("accessToken")!.value);
-  
+export const getMe = async () => {
+    const cookieStore = await cookies();
 
-  if (!token) return null;
+    const accessToken = cookieStore.get("accessToken")?.value || null;
 
-  const res = await api("/api/users/me", {
-    cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+    if(!accessToken){
+        // throw new Error("User Not Logged In!");
 
-  if (!res.success) return res.data.user;
+        return {
+            success : false,
+            message : "User not logged in!"
+        }
+    }
 
-  return res.data.user as User;
-};
+    const res = await fetch(`${process.env.BACKEND_API_URL}/api/users/me`, {
+        headers : {
+            // Authorization : accessToken as unknown as string,
+            // Authorization : `${accessToken}`,
+            // Authorization : `Bearer ${accessToken}`
 
-export default getMe;
+            Cookie : `accessToken=${accessToken}`
+        },
+
+        cache : "force-cache",
+        next : {
+            revalidate : 60 * 60 * 24, // 1day
+            tags : ["my-profile"]
+        }
+    });
+
+    const result = res.json();
+
+
+    return result
+}

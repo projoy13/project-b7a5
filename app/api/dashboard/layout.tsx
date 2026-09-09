@@ -1,3 +1,4 @@
+import { Navbar } from '@/components/shared/navbar'
 import React from 'react'
 const dashboardlayout=(
     {
@@ -10,9 +11,12 @@ const dashboardlayout=(
     }
 )=>{
     return(
-        <>
-        {children}
-        </>
+        <div>
+            {/* <Navbar></Navbar> */}
+  {children}
+      
+        </div>
+      
        
     )
 }

@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import type { LoginState } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { revalidateTag } from "next/cache";
 
 const setAuthCookies = async ({
   accessToken,
@@ -52,10 +53,7 @@ export const loginAction = async (
 
   await setAuthCookies(res.data);
 
-  return {
-    success: true,
-    message: "Login successful! Welcome back.",
-  };
+  redirect("/api/dashboard");
 };
 
 export const registerAction = async (
@@ -79,7 +77,6 @@ export const registerAction = async (
     };
   }
 
-  // Automatically login after registration
   const login = await api("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({
@@ -100,11 +97,12 @@ export const registerAction = async (
   redirect("/api/dashboard");
 };
 
-export const logoutAction = async () => {
-  const cookieStore = await cookies();
+export const logout = async () => {
+    const cookieStore = await cookies();
+    
+    cookieStore.delete("accessToken");
+    cookieStore.delete("refreshToken");
 
-  cookieStore.delete("accessToken");
-  cookieStore.delete("refreshToken");
-
-  redirect("/api/login");
-};
+    revalidateTag("my-profile", "max");
+    // redirect("/login");
+}
