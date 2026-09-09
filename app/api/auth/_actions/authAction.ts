@@ -52,6 +52,8 @@ export const loginAction = async (
     }),
   });
 
+  console.log("LOGIN API RESPONSE:", res);
+
   if (!res.success) {
     return {
       success: false,
@@ -59,12 +61,45 @@ export const loginAction = async (
     };
   }
 
-  await setAuthCookies(res.data);
+  // Backend response:
+  //
+  // {
+  //   message: "User logged in successfully",
+  //   data: {
+  //     accessToken: "...",
+  //     refreshToken: "..."
+  //   }
+  // }
+  //
+  // api() wraps that response inside another data property.
+  //
+  // Therefore:
+  // res.data.data.accessToken
+  // res.data.data.refreshToken
 
-  // Decode access token to get the user's role
-  const decoded = jwt.decode(res.data.accessToken) as DecodedToken | null;
+  const accessToken = res.data?.data?.accessToken;
+  const refreshToken = res.data?.data?.refreshToken;
 
-  console.log("Decoded user:", decoded);
+  console.log("ACCESS TOKEN EXISTS:", !!accessToken);
+  console.log("REFRESH TOKEN EXISTS:", !!refreshToken);
+
+  if (!accessToken || !refreshToken) {
+    return {
+      success: false,
+      message: "Login response does not contain authentication tokens.",
+    };
+  }
+
+  // Save authentication cookies
+  await setAuthCookies({
+    accessToken,
+    refreshToken,
+  });
+
+  // Decode access token to get user's role
+  const decoded = jwt.decode(accessToken) as DecodedToken | null;
+
+  console.log("DECODED USER:", decoded);
 
   if (!decoded || !decoded.role) {
     return {
@@ -73,7 +108,7 @@ export const loginAction = async (
     };
   }
 
-  console.log("User role:", decoded.role);
+  console.log("USER ROLE:", decoded.role);
 
   // CUSTOMER
   if (decoded.role === "CUSTOMER") {
@@ -111,6 +146,8 @@ export const registerAction = async (
     }),
   });
 
+  console.log("REGISTER API RESPONSE:", res);
+
   if (!res.success) {
     return {
       success: false,
@@ -127,6 +164,8 @@ export const registerAction = async (
     }),
   });
 
+  console.log("AUTO LOGIN RESPONSE:", login);
+
   if (!login.success) {
     return {
       success: false,
@@ -134,12 +173,26 @@ export const registerAction = async (
     };
   }
 
-  await setAuthCookies(login.data);
+  const accessToken = login.data?.data?.accessToken;
+  const refreshToken = login.data?.data?.refreshToken;
+
+  if (!accessToken || !refreshToken) {
+    return {
+      success: false,
+      message: "Login response does not contain authentication tokens.",
+    };
+  }
+
+  // Save authentication cookies
+  await setAuthCookies({
+    accessToken,
+    refreshToken,
+  });
 
   // Decode token to get role
-  const decoded = jwt.decode(login.data.accessToken) as DecodedToken | null;
+  const decoded = jwt.decode(accessToken) as DecodedToken | null;
 
-  console.log("Registered user:", decoded);
+  console.log("REGISTERED USER:", decoded);
 
   if (!decoded || !decoded.role) {
     return {

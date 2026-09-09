@@ -1,73 +1,123 @@
+
+import { notFound } from "next/navigation";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { decodeToken } from "./utils/jwt";
-
-const PUBLIC_ROUTE = [
-  "/login",
-  "/register",
+const AUTH_ROUTES = [
+  "/api/auth/login",
+  "/api/auth/register",
 ];
 
-const ROUTE_ROLES = {
-  "/dashboard": ["ADMIN", "PROVIDER", "CUSTOMER"],
-  "/admin": ["ADMIN"],
-  "/provider": ["PROVIDER"],
-};
-
-const goto = (path: string, request: NextRequest) => {
-  return NextResponse.redirect(
-    new URL(path, request.url)
-  );
-};
-
-const matches = (
-  pathname: string,
-  route: string
-) => {
-  return (
-    pathname === route ||
-    pathname.startsWith(`${route}/`)
-  );
-};
+const PUBLIC_ROUTES = [
+  "/",
+];
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const pathname = request.nextUrl.pathname;
 
-  const token = request.cookies.get("accessToken")?.value;
+  // Get access token from cookie
+  const accessToken = request.cookies.get("accessToken")?.value;
 
-  const role = token
-    ? decodeToken(token)?.role
-    : null;
+  // Decode token and get role
+  let userRole: string | null = null;
 
-  // Public routes
-  if (PUBLIC_ROUTE.includes(pathname)) {
-    if (role) {
-      return goto("/dashboard", request);
+  if (accessToken) {
+    const decodedToken = jwt.decode(accessToken) as JwtPayload | null;
+
+    if (decodedToken) {
+      userRole =
+        typeof decodedToken.role === "string"
+          ? decodedToken.role
+          : null;
     }
-
-    return NextResponse.next();
   }
 
-  // Find protected route
-  const matchedRoute = Object.entries(ROUTE_ROLES).find(
-    ([route]) => matches(pathname, route)
+  // -----------------------------
+  // AUTH ROUTES
+  // -----------------------------
+  //
+  // Always allow login/register.
+  // Do NOT redirect logged-in users
+  // away from the login page.
+
+  const isAuthRoute = AUTH_ROUTES.some(
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(`${route}/`)
   );
 
-  // Route doesn't need protection
-  if (!matchedRoute) {
+  if (isAuthRoute) {
     return NextResponse.next();
   }
 
-  const [, allowedRoles] = matchedRoute;
+  // -----------------------------
+  // PUBLIC ROUTES
+  // -----------------------------
 
-  // Not logged in
-  if (!role) {
-    return goto("/login", request);
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(`${route}/`)
+  );
+
+  if (isPublicRoute) {
+    return NextResponse.next();
   }
 
-  // Wrong role
-  if (!allowedRoles.includes(role)) {
-    return goto("/", request);
+  // -----------------------------
+  // PROTECTED ROUTES
+  // -----------------------------
+
+  if (!accessToken) {
+    return NextResponse.redirect(
+      new URL("/api/auth/login", request.url)
+    );
+  }
+
+  // -----------------------------
+  // CUSTOMER DASHBOARD
+  // -----------------------------
+
+  if (
+    pathname === "/api/dashboard" ||
+    pathname.startsWith("/api/dashboard/")
+  ) {
+    if (userRole !== "CUSTOMER") {
+      return NextResponse.redirect(
+        new URL("/not-found", request.url)
+      );
+    }
+  }
+
+  // -----------------------------
+  // ADMIN DASHBOARD
+  // -----------------------------
+
+  if (
+    pathname === "/api/admin-dashboard" ||
+    pathname.startsWith("/api/admin-dashboard/")
+  ) {
+    if (userRole !== "ADMIN") {
+      return NextResponse.redirect(
+        new URL("/not-found", request.url)
+      );
+    }
+  }
+
+  // -----------------------------
+  // PROVIDER DASHBOARD
+  // -----------------------------
+
+  if (
+    pathname === "/api/provider-dashboard" ||
+    pathname.startsWith("/api/provider-dashboard/")
+  ) {
+    if (userRole !== "PROVIDER") {
+      return NextResponse.redirect(
+        new URL("/not-found", request.url)
+      );
+    }
   }
 
   return NextResponse.next();

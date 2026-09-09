@@ -15,7 +15,7 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-6xl">
         <div className="rounded-xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold">
-            Welcome to Dashboard 🎉
+            Welcome to Admin Dashboard 🎉
           </h1>
 
           <p className="mt-2 text-gray-500">
