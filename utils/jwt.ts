@@ -1,5 +1,3 @@
-// "use server"
-
 import jwt, {
   type Secret,
   type SignOptions,
