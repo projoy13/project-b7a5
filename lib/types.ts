@@ -9,3 +9,19 @@ export type User={
     email:string,
     role:Role
 }
+export type GearCategory = {
+  id: string;
+  name: string;
+};
+
+export type Gear = {
+  id: string;
+  name: string;
+  description?: string;
+  brand?: string;
+  pricePerDay: number | string;
+  stock?: number;
+  status?: string;
+  image?: string | null;
+  category?: GearCategory | string;
+};
